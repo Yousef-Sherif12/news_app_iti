@@ -1,0 +1,148 @@
+{
+  "name": "My workflow",
+  "nodes": [
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.body.message }}",
+        "options": {
+          "systemMessage": "You are a strict News Reading Assistant. \n\nCRITICAL DIRECTIVE:\nYou have ONLY ONE JOB: Answer questions based STRICTLY on the provided news data below. You have NO general knowledge and NO access to outside information.\n\nNEWS DATA:\n{{ $('HTTP Request').item.json.articles.slice(0, 5).map(a => `- Title: ${a.title}\\n  Description: ${a.description}`).join('\\n') }}\n\nSTRICT RULES:\n1. If the user's question CANNOT be directly answered using the NEWS DATA above (e.g., general knowledge, math, programming, chat, history, weather, etc.), you MUST IMMEDIATELY REJECT IT.\n2. For ANY off-topic or unanswerable query, reply with ONLY this line in the user's language:\n   - If asked in Arabic: \"عذراً، أنا متخصص فقط في الإجابة على الأسئلة المتعلقة بالأخبار المتاحة حالياً.\"\n   - If asked in English: \"Sorry, I am only specialized in answering questions related to the currently available news.\"\n3. Do NOT try to be polite, do NOT give general answers, and do NOT attempt to answer off-topic questions under any circumstances."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 3.1,
+      "position": [
+        224,
+        0
+      ],
+      "id": "a8650306-f422-482a-8766-e835679b56ec",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "sessionIdType": "customKey",
+        "sessionKey": "={{ $json.body.session_id }}"
+      },
+      "type": "@n8n/n8n-nodes-langchain.memoryBufferWindow",
+      "typeVersion": 1.4,
+      "position": [
+        240,
+        208
+      ],
+      "id": "06249a2b-bbb8-4913-a44b-0ad731deaf1d",
+      "name": "Simple Memory"
+    },
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "customer-support",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.1,
+      "position": [
+        0,
+        16
+      ],
+      "id": "abac6983-8356-41be-ba4e-5a459fc7166e",
+      "name": "Webhook",
+      "webhookId": "a0d5fbf6-fc48-4ce0-b2f9-a4b12f813b69"
+    },
+    {
+      "parameters": {
+        "model": "allam-2-7b",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGroq",
+      "typeVersion": 1,
+      "position": [
+        96,
+        208
+      ],
+      "id": "5162e37d-9591-4d4f-a48d-c258513fd5d6",
+      "name": "Groq Chat Model",
+      "credentials": {
+        "groqApi": {
+          "id": "UrmG52BG3X4eHVLA",
+          "name": "Groq account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "={\n  \"reply\": {{ JSON.stringify($json.output) }}\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        592,
+        0
+      ],
+      "id": "5b3f8433-15bc-47f5-86bd-e5d0433cb917",
+      "name": "Respond to Webhook"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Simple Memory": {
+      "ai_memory": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_memory",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Groq Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "6bbe37b7-85fe-4017-a5d8-9eda9b0910f2",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "207683d6e7f43298108f89725ebf8f3d248a243f1eef687542c97cf986871fcd"
+  },
+  "nodeGroups": [],
+  "id": "afNcfGqxEi1o83oy",
+  "tags": []
+}
